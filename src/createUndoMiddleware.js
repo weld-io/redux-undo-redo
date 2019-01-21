@@ -32,7 +32,7 @@ export default function createUndoMiddleware({getViewState, setViewState, revert
       if (redoItem) {
         acting = true
         setViewState && dispatch(setViewState(redoItem.beforeState))
-        dispatch(redoItem.action)
+        dispatch(getRedoAction(redoItem))
         acting = false
       }
     }
@@ -58,6 +58,16 @@ export default function createUndoMiddleware({getViewState, setViewState, revert
     const actionCreator = get(revertingActions[type], 'action', revertingActions[type])
     if (!actionCreator) {
       throw new Error(`Illegal reverting action definition for '${type}'`)
+    }
+    return actionCreator(action, args)
+  }
+
+  function getRedoAction(redoItem) {
+    const {action, args} = redoItem
+    const {type} = action
+    const actionCreator = get(revertingActions[type], 'redoAction', revertingActions[type])
+    if (!actionCreator) {
+      return redoItem.action
     }
     return actionCreator(action, args)
   }
